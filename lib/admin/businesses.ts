@@ -7,7 +7,7 @@ type filters = {
     city?: string
 }
 
-export async function getBusinesses(filters: filters) {
+export async function getBusinesses(filters: filters = {}) {
     const supabase = await createClient();
 
     let query = supabase.from('businesses')
@@ -24,6 +24,7 @@ export async function getBusinesses(filters: filters) {
             commission_value,
             created_at,
             updated_at,
+            type,
             profile:owner_id(name,email)
             `).order("created_at", { ascending: false })
 
@@ -45,6 +46,7 @@ export async function getBusinesses(filters: filters) {
         console.log('businesses admin lookup error', error)
         return []
     }
+
 
     return data ?? []
 }

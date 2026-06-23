@@ -6,7 +6,7 @@ import {
   Star,
   UtensilsCrossed,
 } from "lucide-react";
-import { getAdminDashboardOverview, getRecentReviews } from "@/lib/admin/overview"
+import { getAdminDashboardOverview } from "@/lib/admin/overview"
 
 import { ChartLine } from "@/components/LineChart"
 
@@ -87,15 +87,61 @@ export default async function Home() {
         <div className="min-w-0 shadow-sm">
           <ChartLine data={weeklyReviewActivity} />
         </div>
-        <div className="admin-card admin-card-padded">
-          <h2 className="font-bold text-xl text-center">New Reviews</h2>
-          <div className="flex flex-col gap-2">
-            {recentReviews.map((review) => <div>
-              <p>
-                {review.comment}
-              </p>
-              <span>{review.rating}</span>
-            </div>)}
+        <div className="admin-card admin-card-padded flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-bold text-on-surface">New Reviews</h2>
+            <span className="eyebrow">{recentReviews.length} latest</span>
+          </div>
+
+          <div className="flex flex-col gap-3">
+            {recentReviews.map((review) => (
+              <div
+                key={review.id}
+                className="group relative rounded-lg border border-transparent bg-surface-container-low p-3.5 transition-all duration-200 hover:border-outline-variant hover:shadow-sm"
+              >
+                {/* Star rating row */}
+                <div className="mb-2 flex items-center gap-1.5">
+                  <div className="flex gap-0.5">
+                    {Array.from({ length: 5 }).map((_, i) => (
+                      <Star
+                        key={i}
+                        className={`size-3.5 ${
+                          i < review.rating
+                            ? "fill-amber-400 text-amber-400"
+                            : "fill-surface-container-high text-surface-container-high"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                  <span className="text-xs font-semibold text-on-surface-variant">
+                    {review.rating.toFixed(1)}
+                  </span>
+                </div>
+
+                {/* Comment */}
+                <p className="line-clamp-2 text-sm leading-relaxed text-on-surface">
+                  {review.comment || "No comment provided."}
+                </p>
+
+                {/* Timestamp */}
+                {review.created_at && (
+                  <p className="mt-2 text-xs text-outline">
+                    {new Date(review.created_at).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                )}
+              </div>
+            ))}
+
+            {recentReviews.length === 0 && (
+              <div className="flex flex-col items-center justify-center gap-2 py-8 text-center">
+                <Star className="size-8 text-outline-variant" />
+                <p className="text-sm text-on-surface-variant">No reviews yet</p>
+              </div>
+            )}
           </div>
         </div>
       </section>

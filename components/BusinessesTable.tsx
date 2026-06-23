@@ -81,7 +81,11 @@ function formatCommission(row: BusinessRow) {
     }
 
     if (row.commission_model === "per_booking") {
-        return `${row.commission_value}% per booking`
+        return `${new Intl.NumberFormat("en", {
+            style: "currency",
+            currency: "MAD",
+            maximumFractionDigits: 0,
+        }).format(row.commission_value)} per booking`
     }
 
     return `${row.commission_value} ${row.commission_model || "commission"}`

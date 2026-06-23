@@ -3,7 +3,7 @@
 import { Sidebar, SidebarHeader, SidebarContent, SidebarGroup, SidebarFooter } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button"
 import Link from "next/link";
-import { LayoutDashboard, MapPin, UtensilsCrossed, Settings, LogOut, Calendar, Hotel, Briefcase } from "lucide-react";
+import { LayoutDashboard, MapPin, UtensilsCrossed, Settings, LogOut, Calendar, Hotel, Briefcase, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 export default function AppSideBar({ className }: { className: string }) {
@@ -16,6 +16,7 @@ export default function AppSideBar({ className }: { className: string }) {
         { href: "/accomodations", label: "Accomodations", icon: Hotel },
         { href: "/businesses", label: "Businesses", icon: Briefcase },
         { href: "/bookings", label: "Bookings", icon: Calendar },
+        { href: '/invoices', label: "Invoices", icon: FileText }
     ];
 
     return (
