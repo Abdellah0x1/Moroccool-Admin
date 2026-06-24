@@ -2,6 +2,11 @@
 
 import { revalidatePath } from "next/cache";
 import requireAdmin from "@/lib/auth/require-admin";
+import { BrevoClient, BrevoError } from "@getbrevo/brevo";
+import {
+    buildInvoicePdf,
+    InvoicePdfError,
+} from "@/lib/invoices/build-invoice-pdf";
 
 type InvoiceActionState = {
     error?: string;
@@ -241,4 +246,111 @@ export async function markAsPaid(invoiceId: number) {
     revalidatePath("/invoices");
     return { success: "Invoice marked as paid" };
 
+}
+
+
+
+export async function sendInvoiceByMail(invoiceId: number) {
+    if (!Number.isSafeInteger(invoiceId) || invoiceId <= 0) {
+        return { error: "Invalid invoice id." };
+    }
+
+    const apiKey = process.env.BREVO_API_KEY;
+    const senderEmail = process.env.BREVO_SENDER_EMAIL;
+    const senderName = process.env.BREVO_SENDER_NAME;
+
+    if (!apiKey || !senderEmail || !senderName) {
+        return { error: "Brevo email is not configured." };
+    }
+
+    const { supabase } = await requireAdmin();
+    let invoice: Awaited<ReturnType<typeof buildInvoicePdf>>;
+
+    try {
+        invoice = await buildInvoicePdf(supabase, invoiceId);
+    } catch (error) {
+        if (error instanceof InvoicePdfError) {
+            return { error: error.message };
+        }
+
+        console.error("invoice PDF generation failed", error);
+        return { error: "Could not generate the invoice PDF." };
+    }
+
+    const recipientEmail = invoice.business?.email;
+
+    if (!recipientEmail) {
+        return { error: "This business has no billing email address." };
+    }
+
+    if (invoice.status === "void") {
+        return { error: "Void invoices cannot be sent." };
+    }
+
+    try {
+        const brevo = new BrevoClient({
+            apiKey,
+            timeoutInSeconds: 30,
+            maxRetries: 0,
+        });
+
+        await brevo.transactionalEmails.sendTransacEmail({
+            sender: {
+                email: senderEmail,
+                name: senderName,
+            },
+            to: [
+                {
+                    email: recipientEmail,
+                    name: invoice.business?.name ?? "Moroccool partner",
+                },
+            ],
+            subject: `Invoice ${invoice.invoiceNumber} from Moroccool`,
+            textContent: `Hello ${invoice.business?.name ?? "there"},
+
+Your Moroccool invoice ${invoice.invoiceNumber} is attached as a PDF.
+
+Thank you,
+Moroccool Billing`,
+            attachment: [
+                {
+                    name: invoice.filename,
+                    content: invoice.pdf.toString("base64"),
+                },
+            ],
+            tags: ["invoice"],
+        });
+    } catch (error) {
+        if (error instanceof BrevoError) {
+            console.error("Brevo failed", {
+                status: error.statusCode,
+                message: error.message,
+                body: error.body,
+            });
+
+            return {
+                error: `Brevo ${error.statusCode}: ${error.message}`,
+            };
+        }
+
+        console.error("Brevo invoice send failed", error);
+        return { error: "Brevo could not send this invoice." };
+    }
+
+    const { error: updateError } = await supabase
+        .from("monthly_invoice")
+        .update({
+            status: "sent",
+            sent_at: new Date().toISOString(),
+        })
+        .eq("id", invoiceId);
+
+    if (updateError) {
+        // Email may already have been accepted by Brevo—do not automatically resend it.
+        return { error: "Invoice was sent, but its status could not be updated." };
+    }
+
+    revalidatePath("/invoices");
+
+    return { success: `Invoice sent to ${recipientEmail}.` };
 }

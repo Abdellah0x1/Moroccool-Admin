@@ -30,24 +30,24 @@ export default function Login() {
                     <CardContent className="space-y-6 pb-8 px-8">
                         <div className="space-y-2.5">
                             <Label htmlFor="email" className="text-slate-700 dark:text-slate-300 font-medium">Email</Label>
-                            <Input 
-                                id="email" 
-                                name="email" 
-                                type="email" 
-                                placeholder="Email address" 
-                                required 
+                            <Input
+                                id="email"
+                                name="email"
+                                type="email"
+                                placeholder="Email address"
+                                required
                                 className="h-12 px-4 rounded-lg bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                         </div>
 
                         <div className="space-y-2.5">
                             <Label htmlFor="password" className="text-slate-700 dark:text-slate-300 font-medium">Password</Label>
-                            <Input 
-                                id="password" 
-                                name="password" 
-                                placeholder="••••••••" 
-                                type="password" 
-                                required 
+                            <Input
+                                id="password"
+                                name="password"
+                                placeholder="••••••••"
+                                type="password"
+                                required
                                 className="h-12 px-4 rounded-lg bg-slate-50 dark:bg-slate-800 border-slate-200 dark:border-slate-700 focus:ring-2 focus:ring-primary/20 transition-all"
                             />
                         </div>
@@ -58,8 +58,8 @@ export default function Login() {
                         )}
                     </CardContent>
                     <CardFooter className="px-8 pb-10">
-                        <Button 
-                            disabled={isPending} 
+                        <Button
+                            disabled={isPending}
                             className="bg-primary-container w-full h-12 text-base font-semibold rounded-lg shadow-md hover:shadow-lg hover:bg-primary-container/90 transition-all duration-300 transform hover:-translate-y-0.5 active:translate-y-0"
                         >
                             {isPending ? "Logging in..." : "Login"}

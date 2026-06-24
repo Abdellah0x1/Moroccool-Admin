@@ -12,8 +12,9 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger
 } from "./ui/dropdown-menu";
-import { MoreHorizontal, Download, CheckCircle2, FileText, Building2 } from "lucide-react";
-import { markAsPaid } from "@/app/actions/invoice-actions";
+import { MoreHorizontal, Download, CheckCircle2, FileText, Building2, Send } from "lucide-react";
+import { markAsPaid, sendInvoiceByMail } from "@/app/actions/invoice-actions";
+import { useRouter } from "next/router";
 
 export type InvoiceRow = {
     id: number;
@@ -73,6 +74,7 @@ function formatCurrency(amount: number) {
         maximumFractionDigits: 0,
     }).format(amount);
 }
+
 
 const columns: ColumnDef<InvoiceRow>[] = [
     {
@@ -190,6 +192,20 @@ const columns: ColumnDef<InvoiceRow>[] = [
                                     Mark as paid
                                 </DropdownMenuItem>
                             )}
+                            <DropdownMenuItem onClick={async () => {
+                                const result = await sendInvoiceByMail(row.original.id);
+
+                                if (result.error) {
+                                    window.alert(result.error);
+                                    return;
+                                }
+
+                                window.alert(result.success);
+
+                            }}>
+                                <Send className="h-4 w-4" />
+                                Send By Mail
+                            </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
                 </div>
