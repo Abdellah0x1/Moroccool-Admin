@@ -1,8 +1,7 @@
 import { BookingsTable } from "@/components/BookingsTable"
 import { Input } from "@/components/ui/input";
 import { getAllBookings } from "@/lib/bookings";
-import { Filter } from "lucide-react";
-import { Label } from "@/components/ui/label";
+import { Filter, Search } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 
@@ -25,40 +24,53 @@ export default async function Bookings({ searchParams }: { searchParams: { statu
             </div>
         </div>
 
-        <div className="shadow-sm p-4 bg-white/50 border border-gray-200 rounded-xl space-y-4">
-            <div className="flex items-center gap-2">
+        <form method="GET" className="flex flex-wrap items-center gap-3 rounded-xl border border-gray-200 bg-white/60 px-4 py-3 shadow-sm backdrop-blur-sm">
+            <div className="flex items-center gap-2 text-muted-foreground">
                 <Filter className="h-4 w-4" />
-                <p className="text-sm font-semibold"> Filter</p>
+                <span className="text-xs font-semibold uppercase tracking-wide">Filters</span>
             </div>
-            <p className="text-sm text-muted-foreground "> Filter the bookings based on the status.</p>
-            <form method="GET" className="grid grid-cols-[1fr_auto_auto_auto] gap-4 items-end">
-                <div className="space-y-2">
-                    <Label>Search (Name, Email, phone)</Label>
-                    <Input name="q" placeholder="Search Name Email, phone.." type="text" />
-                </div>
 
-                <div className="space-y-2">
-                    <Label>Check in date</Label>
-                    <Input name="checkIn" type="date" />
-                </div>
-                <div className="space-y-2">
-                    <Label>Status</Label>
-                    <Select name="status" >
-                        <SelectTrigger>
-                            <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="Confirmed">Confirmed</SelectItem>
-                            <SelectItem value="Rejected">Rejected</SelectItem>
-                        </SelectContent>
-                    </Select>
-                </div>
-                <div className="space-y-2">
-                    <Label />
-                    <Button type="submit" className="text-white transition-all duration-150" style={{ background: "var(--primary-container)" }} size="sm">Apply Filters</Button>
-                </div>
-            </form>
-        </div>
+            <div className="h-5 w-px bg-gray-200" />
+
+            <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                <Input
+                    name="q"
+                    placeholder="Search by name, email, phone…"
+                    type="text"
+                    defaultValue={params.q ?? ""}
+                    className="h-9 pl-8 bg-gray-50/80 border-gray-200 focus:bg-white"
+                />
+            </div>
+
+            <Input
+                name="checkIn"
+                type="date"
+                defaultValue={params.checkIn ?? ""}
+                className="h-9 w-[160px] bg-gray-50/80 border-gray-200 focus:bg-white"
+            />
+
+            <Select name="status" defaultValue={params.status ?? ""}>
+                <SelectTrigger className="h-9 w-[150px] bg-gray-50/80 border-gray-200">
+                    <SelectValue placeholder="All statuses" />
+                </SelectTrigger>
+                <SelectContent>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="confirmed">Confirmed</SelectItem>
+                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                </SelectContent>
+            </Select>
+
+            <Button
+                type="submit"
+                size="sm"
+                className="h-9 px-4 text-white shadow-sm transition-all duration-150 hover:opacity-90"
+                style={{ background: "var(--primary-container)" }}
+            >
+                Apply
+            </Button>
+        </form>
 
         <BookingsTable bookings={filteredBookings} />
 
