@@ -55,10 +55,7 @@ export default async function Home() {
             Monitor listings, bookings, and partner activity across Moroccool.
           </p>
         </div>
-        <Button className="h-9 bg-primary-container px-3 font-bold text-white hover:bg-primary-container/90">
-          <Plus className="size-4" />
-          New listing
-        </Button>
+
       </div>
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
@@ -105,11 +102,10 @@ export default async function Home() {
                     {Array.from({ length: 5 }).map((_, i) => (
                       <Star
                         key={i}
-                        className={`size-3.5 ${
-                          i < review.rating
+                        className={`size-3.5 ${i < review.rating
                             ? "fill-amber-400 text-amber-400"
                             : "fill-surface-container-high text-surface-container-high"
-                        }`}
+                          }`}
                       />
                     ))}
                   </div>
