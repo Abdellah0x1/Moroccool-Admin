@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Geist } from "next/font/google";
+import { Toaster } from "sonner";
 import { cn } from "@/lib/utils";
 
 
@@ -16,6 +17,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <html lang="en" className={cn("h-full antialiased", "font-sans", geist.variable)}>
             <body className="min-h-full w-screen">
                 {children}
+                <Toaster position="top-right" richColors />
             </body>
         </html>
     );

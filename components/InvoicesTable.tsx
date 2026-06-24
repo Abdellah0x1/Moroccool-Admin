@@ -1,6 +1,9 @@
 "use client"
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { DataTable } from "./Table";
 import { Badge } from "./ui/badge";
 import { Button } from "./ui/button";
@@ -14,7 +17,6 @@ import {
 } from "./ui/dropdown-menu";
 import { MoreHorizontal, Download, CheckCircle2, FileText, Building2, Send } from "lucide-react";
 import { markAsPaid, sendInvoiceByMail } from "@/app/actions/invoice-actions";
-import { useRouter } from "next/router";
 
 export type InvoiceRow = {
     id: number;
@@ -75,6 +77,67 @@ function formatCurrency(amount: number) {
     }).format(amount);
 }
 
+function InvoiceActions({ invoice }: { invoice: InvoiceRow }) {
+    const router = useRouter();
+    const [isSending, setIsSending] = useState(false);
+
+    async function handleSendInvoice() {
+        setIsSending(true);
+        const toastId = toast.loading("Sending invoice email…");
+
+        try {
+            const result = await sendInvoiceByMail(invoice.id);
+
+            if (!result || result.error) {
+                toast.error(result?.error ?? "Could not send the invoice.", { id: toastId });
+                return;
+            }
+
+            toast.success(result.success ?? "Invoice email sent.", { id: toastId });
+            router.refresh();
+        } catch {
+            toast.error("Could not send the invoice.", { id: toastId });
+        } finally {
+            setIsSending(false);
+        }
+    }
+
+    return (
+        <div className="flex justify-end">
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon-sm" className="rounded-md">
+                        <span className="sr-only">Open menu</span>
+                        <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                    <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem asChild>
+                        <a href={`/api/invoices/${invoice.id}/pdf`} download>
+                            <Download className="size-4" />
+                            Download PDF
+                        </a>
+                    </DropdownMenuItem>
+                    {invoice.status !== "paid" && (
+                        <DropdownMenuItem onClick={() => markAsPaid(invoice.id)}>
+                            <CheckCircle2 className="size-4" />
+                            Mark as paid
+                        </DropdownMenuItem>
+                    )}
+                    <DropdownMenuItem
+                        disabled={isSending}
+                        onClick={() => void handleSendInvoice()}
+                    >
+                        <Send className="h-4 w-4" />
+                        {isSending ? "Sending…" : "Send by email"}
+                    </DropdownMenuItem>
+                </DropdownMenuContent>
+            </DropdownMenu>
+        </div>
+    );
+}
 
 const columns: ColumnDef<InvoiceRow>[] = [
     {
@@ -167,50 +230,7 @@ const columns: ColumnDef<InvoiceRow>[] = [
     {
         id: "actions",
         header: () => <div className="text-right">Actions</div>,
-        cell: ({ row }) => {
-            return (
-                <div className="flex justify-end">
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon-sm" className="rounded-md">
-                                <span className="sr-only">Open menu</span>
-                                <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
-                                <a href={`/api/invoices/${row.original.id}/pdf`} download>
-                                    <Download className="size-4" />
-                                    Download PDF
-                                </a>
-                            </DropdownMenuItem>
-                            {row.original.status !== "paid" && (
-                                <DropdownMenuItem onClick={() => markAsPaid(Number(row.original.id))}>
-                                    <CheckCircle2 className="size-4" />
-                                    Mark as paid
-                                </DropdownMenuItem>
-                            )}
-                            <DropdownMenuItem onClick={async () => {
-                                const result = await sendInvoiceByMail(row.original.id);
-
-                                if (result.error) {
-                                    window.alert(result.error);
-                                    return;
-                                }
-
-                                window.alert(result.success);
-
-                            }}>
-                                <Send className="h-4 w-4" />
-                                Send By Mail
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
-            );
-        }
+        cell: ({ row }) => <InvoiceActions invoice={row.original} />,
     }
 ];
 

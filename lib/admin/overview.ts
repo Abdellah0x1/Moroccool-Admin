@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import requireAdmin from "../auth/require-admin";
 import { createClient } from "../supabase/server";
+import { create } from "domain";
 
 type AdminSupabaseClient = Awaited<ReturnType<typeof requireAdmin>>["supabase"];
 
@@ -117,16 +118,18 @@ export async function getWeeklyReviewActivity(weekCount = DEFAULT_WEEK_COUNT): P
 
 export async function getAdminDashboardOverview() {
     const supabase = await createClient();
-    const [stats, weeklyReviewActivity, recentReviews] = await Promise.all([
+    const [stats, weeklyReviewActivity, recentReviews, topDestinations] = await Promise.all([
         getAdminOverViewStatsFromClient(supabase),
         getWeeklyReviewActivityFromClient(supabase),
-        getRecentReviews(supabase)
+        getRecentReviews(supabase),
+        getTopDestinations(supabase)
     ]);
 
     return {
         stats,
         weeklyReviewActivity,
-        recentReviews
+        recentReviews,
+        topDestinations
     };
 }
 
@@ -142,4 +145,46 @@ export async function getRecentReviews(supabase: AdminSupabaseClient) {
     console.log('reviews ', reviews)
 
     return reviews;
+}
+
+
+export async function getRecentBookings(supabase: AdminSupabaseClient) {
+    const { data: bookings, error: BookingsError } = await supabase.from('bookings').select("*", { count: "exact" }).limit(4).order('created_at', { ascending: false })
+
+
+    if (!bookings || BookingsError) {
+        console.log('recent bookings fetching error ', BookingsError)
+        return []
+    }
+    console.log('bookings ', bookings)
+
+    return bookings;
+}
+
+
+export async function getTopDestinations(supabase: AdminSupabaseClient) {
+    const { data, error } = await supabase.from('bookings').select("etablissement(city)")
+        .ilike("status", "confirmed");
+
+    if (!data || error) {
+        console.log('weekly booking activity fetching error ', error)
+        return []
+    }
+    const cityCount = new Map<string, number>();
+    for (const booking of data) {
+        let city = null;
+        if (Array.isArray(booking?.etablissement)) {
+            city = booking.etablissement[0]?.city;
+        } else {
+            city = booking?.etablissement?.city;
+        }
+
+        if (!city) continue;
+        const currentCount = cityCount.get(city) ?? 0;
+        cityCount.set(city, currentCount + 1);
+    }
+
+    console.log('top 6 destinations', Array.from(cityCount.entries()).map(([city, booking]) => ({ city, booking })).sort((a, b) => b.booking - a.booking).slice(0, 6))
+
+    return Array.from(cityCount.entries()).map(([city, booking]) => ({ city, booking })).sort((a, b) => b.booking - a.booking).slice(0, 6);
 }
