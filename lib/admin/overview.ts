@@ -1,7 +1,5 @@
-import { cookies } from "next/headers";
 import requireAdmin from "../auth/require-admin";
 import { createClient } from "../supabase/server";
-import { create } from "domain";
 
 type AdminSupabaseClient = Awaited<ReturnType<typeof requireAdmin>>["supabase"];
 

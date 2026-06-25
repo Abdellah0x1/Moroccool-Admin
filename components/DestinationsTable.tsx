@@ -92,9 +92,9 @@ const columns: ColumnDef<DestinationRow>[] = [
                                 Copy slug
                             </DropdownMenuItem>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
+                            {/* <DropdownMenuItem asChild>
                                 <Link href={`/destinations/${destination.id}`}>View destination</Link>
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem asChild>
                                 <Link href={`/destinations/${destination.id}/edit`}>Edit destination</Link>
                             </DropdownMenuItem>

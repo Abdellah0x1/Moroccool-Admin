@@ -109,9 +109,9 @@ const columns: ColumnDef<RestaurantRow>[] = [
                         <DropdownMenuContent align="end" className="w-44">
                             <DropdownMenuLabel>Actions</DropdownMenuLabel>
                             <DropdownMenuSeparator />
-                            <DropdownMenuItem asChild>
+                            {/* <DropdownMenuItem asChild>
                                 <Link href={`/restaurants/${restaurant.id}`}>View restaurant</Link>
-                            </DropdownMenuItem>
+                            </DropdownMenuItem> */}
                             <DropdownMenuItem asChild>
                                 <Link href={`/restaurants/${restaurant.id}/edit`}>Edit restaurant</Link>
                             </DropdownMenuItem>

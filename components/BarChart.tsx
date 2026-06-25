@@ -20,14 +20,7 @@ import {
 
 export const description = "A bar chart"
 
-const chartData = [
-    { city: "Marrakech", booking: 186 },
-    { city: "Essaouira", booking: 305 },
-    { city: "Chefchaouen", booking: 237 },
-    { city: "Fes", booking: 73 },
-    { city: "Merzouga", booking: 209 },
-    { city: "Tangier", booking: 214 },
-]
+
 
 const chartConfig = {
     booking: {
