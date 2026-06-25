@@ -158,3 +158,4 @@ export async function updateAccomodation(_prevState: { error?: string, success?:
     revalidatePath('/accomodations');
     redirect('/accomodations');
 }
+

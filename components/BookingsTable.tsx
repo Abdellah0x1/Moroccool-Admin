@@ -13,6 +13,9 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MoreHorizontal, Mail, Phone, CalendarDays, Clock, Users, Eye, CheckCircle, XCircle } from "lucide-react";
+import Link
+    from "next/link";
+import { approveBooking, rejectBooking } from "@/app/actions/booking";
 
 export type BookingRow = {
     id: string,
@@ -61,7 +64,7 @@ const columns: ColumnDef<BookingRow>[] = [
         cell: ({ row }) => {
             const dateStr = row.original.requested_date;
             const timeStr = row.original.requested_time;
-            
+
             // Format date nicely if possible
             let formattedDate = dateStr;
             try {
@@ -106,7 +109,7 @@ const columns: ColumnDef<BookingRow>[] = [
         header: "Status",
         cell: ({ row }) => {
             const status = row.original.status?.toLowerCase() || "unknown";
-            
+
             let variant: "default" | "secondary" | "destructive" | "outline" = "outline";
             let customClass = "";
 
@@ -171,13 +174,15 @@ const columns: ColumnDef<BookingRow>[] = [
                             Copy booking ID
                         </DropdownMenuItem>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem>
-                            <Eye className="mr-2 h-4 w-4" /> View details
+                        <DropdownMenuItem asChild>
+                            <Link href={`/bookings/${booking.id}`}>
+                                <Eye className="mr-2 h-4 w-4" /> View details
+                            </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-green-600">
+                        <DropdownMenuItem className="text-green-600" onClick={async () => await approveBooking(parseInt(booking.id))}>
                             <CheckCircle className="mr-2 h-4 w-4" /> Approve
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="text-red-600">
+                        <DropdownMenuItem className="text-red-600" onClick={async () => await rejectBooking(parseInt(booking.id))}>
                             <XCircle className="mr-2 h-4 w-4" /> Reject
                         </DropdownMenuItem>
                     </DropdownMenuContent>
@@ -191,4 +196,4 @@ export function BookingsTable({ bookings }: { bookings: BookingRow[] }) {
     return (
         <DataTable columns={columns} data={bookings} />
     )
-}
+}

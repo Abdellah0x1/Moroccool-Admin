@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import Link from "next/link";
 import { LayoutDashboard, MapPin, UtensilsCrossed, Settings, LogOut, Calendar, Hotel, Briefcase, FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { logoutAdmin } from "@/app/actions/auth-actions";
 
 export default function AppSideBar({ className }: { className: string }) {
     const pathname = usePathname();
@@ -71,6 +72,7 @@ export default function AppSideBar({ className }: { className: string }) {
                     Settings
                 </Link>
                 <Button
+                    onClick={async () => await logoutAdmin()}
                     variant="ghost"
                     className="w-full justify-start gap-3 px-3 py-2.5 h-auto text-[14px] font-medium text-red-400 hover:bg-red-50 hover:text-red-600 cursor-pointer rounded-lg transition-all duration-200"
                 >
