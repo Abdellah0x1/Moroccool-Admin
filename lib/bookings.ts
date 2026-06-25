@@ -44,7 +44,7 @@ export async function getAllBookings() {
             check_in: acc?.check_in ?? null,
             check_out: acc?.check_out ?? null,
         };
-    });
+    }).filter(b => b.check_out >= new Date().toISOString().split('T')[0]);
 }
 
 
