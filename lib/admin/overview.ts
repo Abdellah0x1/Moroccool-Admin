@@ -116,18 +116,18 @@ export async function getWeeklyReviewActivity(weekCount = DEFAULT_WEEK_COUNT): P
 
 export async function getAdminDashboardOverview() {
     const supabase = await createClient();
-    const [stats, weeklyReviewActivity, recentReviews, topDestinations] = await Promise.all([
+    const [stats, recentReviews, topDestinations, restaurantAccommodationStats] = await Promise.all([
         getAdminOverViewStatsFromClient(supabase),
-        getWeeklyReviewActivityFromClient(supabase),
         getRecentReviews(supabase),
-        getTopDestinations(supabase)
+        getTopDestinations(supabase),
+        getRestaurantAccommodationStatsBy(supabase)
     ]);
 
     return {
         stats,
-        weeklyReviewActivity,
         recentReviews,
-        topDestinations
+        topDestinations,
+        restaurantAccommodationStats
     };
 }
 
@@ -182,7 +182,178 @@ export async function getTopDestinations(supabase: AdminSupabaseClient) {
         cityCount.set(city, currentCount + 1);
     }
 
-    console.log('top 6 destinations', Array.from(cityCount.entries()).map(([city, booking]) => ({ city, booking })).sort((a, b) => b.booking - a.booking).slice(0, 6))
 
     return Array.from(cityCount.entries()).map(([city, booking]) => ({ city, booking })).sort((a, b) => b.booking - a.booking).slice(0, 6);
 }
+
+
+
+function startOfUtcDay(date: Date) {
+    return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()))
+}
+
+
+function getActivityKey(date: Date, filter: "day" | "month" | "year") {
+    if (filter == "year") return String(date.getUTCFullYear())
+
+    if (filter == "month") return `${date.getUTCFullYear()}-${String(date.getUTCMonth() + 1).padStart(2, "0")}`
+
+    return date.toISOString().slice(0, 10);
+}
+
+const ACTIVITY_BUCKETS = {
+    day: 30,
+    month: 12,
+    year: 5
+} satisfies Record<"day" | "month" | "year", number>
+
+type ListingActivityRow = {
+    type: string | null;
+    created_at: string | null;
+};
+
+function formatActivityLabel(date: Date, filter: "day" | "month" | "year") {
+    if (filter == 'year') {
+        return String(date.getUTCFullYear())
+    }
+
+    if (filter == "month") {
+        return new Intl.DateTimeFormat("en", {
+            month: 'short',
+            day: 'numeric',
+            timeZone: "UTC"
+        }).format(date)
+    }
+
+    return new Intl.DateTimeFormat("en", {
+        timeZone: "UTC",
+        day: "numeric",
+        month: "short"
+    }).format(date)
+}
+
+function buildActivityBuckets(filter: "year" | "day" | "month") {
+    const count = ACTIVITY_BUCKETS[filter];
+    const now = new Date();
+
+    return Array.from({ length: count }, (_, index) => {
+        const date = startOfUtcDay(now);
+
+        if (filter === "year") {
+            date.setUTCFullYear(date.getUTCFullYear() - (count - 1 - index));
+            date.setUTCMonth(0, 1);
+        }
+
+        if (filter === "month") {
+            date.setUTCMonth(date.getUTCMonth() - (count - 1 - index), 1);
+        }
+
+        if (filter === "day") {
+            date.setUTCDate(date.getUTCDate() - (count - 1 - index));
+        }
+
+        return {
+            period: formatActivityLabel(date, filter),
+            restaurants: 0,
+            accommodations: 0,
+        };
+    });
+}
+
+
+function getActivityStartDate(filter: "year" | "day" | "month") {
+    const count = ACTIVITY_BUCKETS[filter];
+    const date = startOfUtcDay(new Date());
+
+    if (filter == 'year') {
+        date.setUTCFullYear(date.getUTCFullYear() - (count - 1))
+    }
+
+    if (filter == 'month') {
+        date.setUTCMonth(date.getUTCMonth() - (count - 1), 1)
+    }
+
+    if (filter == 'day') {
+        date.setUTCDate(date.getUTCDate() - (count - 1));
+    }
+    return date;
+}
+
+export type ActivityFilter = "day" | "month" | "year";
+
+export type RestaurantAccommodationActivityPoint = {
+    period: string;
+    restaurants: number;
+    accommodations: number;
+}
+
+export type RestaurantAccommodationActivity = Record<ActivityFilter, RestaurantAccommodationActivityPoint[]>;
+
+function fillActivityRows(rows: RestaurantAccommodationActivityPoint[], listings: ListingActivityRow[], filter: ActivityFilter) {
+    const bucketByKey = new Map<string, RestaurantAccommodationActivityPoint>();
+
+    rows.forEach((row, index) => {
+        const date = getActivityStartDate(filter);
+
+        if (filter == "year") {
+            date.setUTCFullYear(date.getUTCFullYear() + index);
+        }
+        if (filter == "month") {
+            date.setUTCMonth(date.getUTCMonth() + index)
+        }
+
+        if (filter == "day") {
+            date.setUTCDate(date.getUTCDate() + index)
+        }
+
+        bucketByKey.set(getActivityKey(date, filter), row);
+    });
+
+
+    listings.forEach((listing) => {
+        if (!listing.created_at) return;
+
+        const row = bucketByKey.get(getActivityKey(new Date(listing.created_at), filter));
+        if (!row) return;
+
+        if (listing.type === "restaurant") {
+            row.restaurants += 1;
+        }
+
+        if (listing.type === "hotel") {
+            row.accommodations += 1;
+        }
+    });
+
+    return rows;
+}
+
+export async function getRestaurantAccommodationStatsBy(
+    supabase: AdminSupabaseClient
+): Promise<RestaurantAccommodationActivity> {
+    const startDate = getActivityStartDate("year");
+
+    const { data, error } = await supabase
+        .from("etablissement")
+        .select("type, created_at")
+        .in("type", ["restaurant", "hotel"])
+        .gte("created_at", startDate.toISOString())
+        .lte("created_at", new Date().toISOString())
+        .order("created_at", { ascending: true });
+
+    const listings = (data ?? []) as ListingActivityRow[];
+
+    if (error) {
+        console.log("Error fetching restaurant/accommodation activity", error);
+    }
+
+    return {
+        day: fillActivityRows(buildActivityBuckets("day"), listings, "day"),
+        month: fillActivityRows(buildActivityBuckets("month"), listings, "month"),
+        year: fillActivityRows(buildActivityBuckets("year"), listings, "year"),
+    };
+}
+
+
+
+

@@ -12,7 +12,7 @@ import { ChartBar } from "@/components/BarChart";
 
 
 export default async function Home() {
-  const { stats: overviewStats, weeklyReviewActivity, recentReviews, topDestinations } = await getAdminDashboardOverview()
+  const { stats: overviewStats, recentReviews, topDestinations, restaurantAccommodationStats } = await getAdminDashboardOverview()
 
   const metrics = [
     {
@@ -83,7 +83,7 @@ export default async function Home() {
 
       <section className="grid gap-4 md:grid-cols-[2fr_minmax(150px,1fr)] lg:grid-cols-[minmax(0px_2fr)_minmax(280px_1fr)]">
         <div className="min-w-0 shadow-sm">
-          <ChartLine data={weeklyReviewActivity} />
+          <ChartLine data={restaurantAccommodationStats} />
         </div>
         <section className="flex gap-10 justify-between">
 

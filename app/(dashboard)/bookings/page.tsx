@@ -71,8 +71,6 @@ export default async function Bookings({ searchParams }: { searchParams: { statu
                 Apply
             </Button>
         </form>
-
         <BookingsTable bookings={filteredBookings} />
-
     </div>
 }
