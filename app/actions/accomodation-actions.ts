@@ -16,6 +16,7 @@ export async function createAccomodation(_prevState: { error?: string; success?:
     const cityId = Number(formData.get('city_id'))
     const description = String(formData.get('description')).trim()
     const openingHoursRaw = String(formData.get('openingHours') || '{}')
+    const logo = formData.get('logo')
     const images = formData.getAll('images') as File[]
 
     if (!name || !address || !cityId) {
@@ -32,6 +33,22 @@ export async function createAccomodation(_prevState: { error?: string; success?:
     const validImages = images.filter(img => img instanceof File && img.size > 0)
     if (validImages.some(img => !img.type.startsWith('image/'))) {
         return { error: 'Only image files are allowed' }
+    }
+
+    const logoFile = logo instanceof File && logo.size > 0 ? logo : null
+
+    if (logoFile && !logoFile.type.startsWith('image/')) {
+        return { error: 'Only image files are allowed for the logo' }
+    }
+
+    let logoUrl: string | null = null
+    if (logoFile) {
+        try {
+            logoUrl = await uploadToCloudinary(logoFile, `${name}-logo`, 'accommodations/logos')
+        } catch (err) {
+            console.log('Error uploading logo: ', err)
+            return { error: 'Error uploading logo' }
+        }
     }
 
     let imageUrls: string[] = []
@@ -56,6 +73,7 @@ export async function createAccomodation(_prevState: { error?: string; success?:
         city_id: cityId,
         description,
         openingHours: JSON.parse(openingHoursRaw),
+        logo: logoUrl,
         images: imageUrls,
         type: 'hotel',
     })
@@ -94,6 +112,7 @@ export async function updateAccomodation(_prevState: { error?: string, success?:
     const phone = String(formData.get('phone'));
     const website = String(formData.get('website'));
     const description = String(formData.get('description'));
+    const logo = formData.get('logo');
     const imagesFiles = formData.getAll('images') as File[];
     const city_id = Number(formData.get('city_id'))
     const rating = parseFloat(String(formData.get('rating') || '0'))
@@ -124,6 +143,27 @@ export async function updateAccomodation(_prevState: { error?: string, success?:
 
     const validImages = imagesFiles.filter(image => image instanceof File && image.size > 0);
 
+    if (validImages.some(image => !image.type.startsWith('image/'))) {
+        return { error: 'Only image files are allowed' }
+    }
+
+    const logoFile = logo instanceof File && logo.size > 0 ? logo : null;
+
+    if (logoFile && !logoFile.type.startsWith('image/')) {
+        return { error: 'Only image files are allowed for the logo' }
+    }
+
+    let logoUrl = typeof existingAccomodation.logo === 'string' ? existingAccomodation.logo : null;
+    if (logoFile) {
+        try {
+            logoUrl = await uploadToCloudinary(logoFile, `${name}-logo`, 'accommodations/logos')
+        }
+        catch (err) {
+            console.log('Error uploading logo: ', err);
+            return { error: 'Error uploading logo' }
+        }
+    }
+
     let imagesUrls: string[] = []
 
     if (validImages.length > 0) {
@@ -148,6 +188,7 @@ export async function updateAccomodation(_prevState: { error?: string, success?:
         rating,
         description,
         openingHours,
+        logo: logoUrl,
         images: imagesUrls.length > 0 ? imagesUrls : existingAccomodation.images
     }).eq('id', id).eq('type', 'hotel');
 
@@ -158,4 +199,3 @@ export async function updateAccomodation(_prevState: { error?: string, success?:
     revalidatePath('/accomodations');
     redirect('/accomodations');
 }
-

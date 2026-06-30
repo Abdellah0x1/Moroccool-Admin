@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { MultiImageUpload } from "@/components/MultiImageUpload"
+import { LogoImageInput } from "@/components/LogoImageInput"
 import { OpeningHoursInput } from "@/components/OpeningHoursInput"
 import { createRestaurant } from "@/app/actions/restaurants"
 
@@ -120,8 +121,13 @@ export function NewRestaurantForm({ cities }: { cities: City[] }) {
 
             <section className="admin-card p-4">
                 <h2 className="font-bold text-xl text-primary-cotainer mb-2">Media</h2>
-                <p className="text-muted-foreground mb-4">Upload high-quality images of the restaurant. You can select multiple.</p>
-                <MultiImageUpload name="images" />
+                <div className="space-y-6">
+                    <LogoImageInput label="Restaurant logo" />
+                    <div>
+                        <p className="text-muted-foreground mb-4">Upload high-quality images of the restaurant. You can select multiple.</p>
+                        <MultiImageUpload name="images" />
+                    </div>
+                </div>
             </section>
 
             <div className="flex justify-center gap-4">

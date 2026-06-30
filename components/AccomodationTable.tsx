@@ -27,6 +27,7 @@ export type AccomodationRow = {
     city: string | null
     description: string | null
     images: string[] | null
+    logo?: string | null
 }
 
 const columns: ColumnDef<AccomodationRow>[] = [
@@ -36,7 +37,7 @@ const columns: ColumnDef<AccomodationRow>[] = [
         cell: ({ row }) => {
             const item = row.original
             const initial = item.name.charAt(0).toUpperCase()
-            const thumb = item.images?.[0]
+            const thumb = item.logo || item.images?.[0]
 
             return (
                 <div className="flex min-w-[240px] items-center gap-3">

@@ -6,7 +6,7 @@ import type { RestaurantRow } from "@/components/RestaurantsTable"
 export async function getRestaurants() {
     const supabase = await createClient();
 
-    const { data: Restaurants, error } = await supabase.from("etablissement").select("id, name, description, address, phone, images, city, city_id, rating, website, openingHours").eq("type", "restaurant")
+    const { data: Restaurants, error } = await supabase.from("etablissement").select("id, name, description, address, phone, images, logo, city, city_id, rating, website, openingHours").eq("type", "restaurant")
 
     if (error) {
         console.log("error fetching restaurant from supabase", error);
@@ -21,7 +21,7 @@ export async function getRestaurants() {
 export async function getRestaurant(id: number) {
     const supabase = await createClient();
     const { data: restaurant, error } = await supabase.from("etablissement")
-        .select("id,name,description,address,phone,images,city,city_id,rating,website,openingHours").eq("id", id).single();
+        .select("id,name,description,address,phone,images,logo,city,city_id,rating,website,openingHours").eq("id", id).single();
 
     if (error) {
         console.log("error fetching restaurant from supabase", error);

@@ -169,7 +169,7 @@ export async function getTopDestinations(supabase: AdminSupabaseClient) {
         return []
     }
     const cityCount = new Map<string, number>();
-    for (const booking of data) {
+    for (const booking of data as any[]) {
         let city = null;
         if (Array.isArray(booking?.etablissement)) {
             city = booking.etablissement[0]?.city;

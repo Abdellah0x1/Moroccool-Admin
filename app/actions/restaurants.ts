@@ -16,6 +16,7 @@ export async function createRestaurant(_prevState: { error?: string, success?: s
     const cityId = Number(formData.get("city_id"))
     const rating = parseFloat(String(formData.get("rating") || "0"))
     const openingHoursRaw = String(formData.get("openingHours") || "{}")
+    const logo = formData.get("logo")
     const images = formData.getAll("images") as File[]
 
     if (!name || !description || !address || !phone || !cityId) {
@@ -27,6 +28,22 @@ export async function createRestaurant(_prevState: { error?: string, success?: s
 
     if (validImages.some(img => !img.type.startsWith('image/'))) {
         return { error: "Only image files are allowed" }
+    }
+
+    const logoFile = logo instanceof File && logo.size > 0 ? logo : null
+
+    if (logoFile && !logoFile.type.startsWith('image/')) {
+        return { error: "Only image files are allowed for the logo" }
+    }
+
+    let logoUrl: string | null = null
+    if (logoFile) {
+        try {
+            logoUrl = await uploadToCloudinary(logoFile, `${name}-logo`, "restaurants/logos")
+        } catch (err) {
+            console.log("Error uploading logo: ", err)
+            return { error: "Error uploading logo" }
+        }
     }
 
     // Upload all images in parallel — forEach(async ...) does NOT await!
@@ -54,6 +71,7 @@ export async function createRestaurant(_prevState: { error?: string, success?: s
         address,
         phone,
         website,
+        logo: logoUrl,
         images: imageUrls,
         type: "restaurant",
         city_id: cityId,
@@ -96,6 +114,7 @@ export async function updateRestaurant(_prevState: { error?: string, success?: s
     const cityId = Number(formData.get("city_id"));
     const rating = Number.parseFloat(String(formData.get("rating") || "0"));
     const openingHours = parseOpeningHours(String(formData.get("openingHours") || "{}"));
+    const logo = formData.get("logo");
     const images = formData.getAll("images") as File[];
 
     if (!id) {
@@ -112,7 +131,7 @@ export async function updateRestaurant(_prevState: { error?: string, success?: s
 
     const { data: existingRestaurant, error: existingError } = await supabase
         .from("etablissement")
-        .select("images")
+        .select("images, logo")
         .eq("id", id)
         .eq("type", "restaurant")
         .single();
@@ -126,6 +145,22 @@ export async function updateRestaurant(_prevState: { error?: string, success?: s
 
     if (validImages.some((image) => !image.type.startsWith("image/"))) {
         return { error: "Only image files are allowed" }
+    }
+
+    const logoFile = logo instanceof File && logo.size > 0 ? logo : null;
+
+    if (logoFile && !logoFile.type.startsWith("image/")) {
+        return { error: "Only image files are allowed for the logo" }
+    }
+
+    let logoUrl = typeof existingRestaurant.logo === "string" ? existingRestaurant.logo : null;
+    if (logoFile) {
+        try {
+            logoUrl = await uploadToCloudinary(logoFile, `${name}-logo`, "restaurants/logos");
+        } catch (error) {
+            console.log("Error uploading restaurant logo: ", error)
+            return { error: "Error uploading restaurant logo" }
+        }
     }
 
     let newImageUrls: string[] = [];
@@ -164,6 +199,7 @@ export async function updateRestaurant(_prevState: { error?: string, success?: s
         city: cityRow.name,
         rating,
         openingHours,
+        logo: logoUrl,
         images: newImageUrls.length > 0 ? [...existingImages, ...newImageUrls] : existingImages,
     };
 

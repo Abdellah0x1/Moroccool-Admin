@@ -30,7 +30,8 @@ export type RestaurantRow = {
     website: string | null,
     phone: string | null,
     openingHours: Record<string, string> | null,
-    images: string[] | null
+    images: string[] | null,
+    logo?: string | null,
 }
 import { deleteRestaurant } from "@/app/actions/restaurants"
 
@@ -42,7 +43,7 @@ const columns: ColumnDef<RestaurantRow>[] = [
         cell: ({ row }) => {
             const restaurant = row.original
             const initial = restaurant.name.charAt(0).toUpperCase()
-            const thumb = restaurant.images?.[0]
+            const thumb = restaurant.logo || restaurant.images?.[0]
 
             return (
                 <div className="flex min-w-[240px] items-center gap-3">

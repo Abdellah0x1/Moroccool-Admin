@@ -15,6 +15,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { MultiImageUpload } from "@/components/MultiImageUpload"
+import { LogoImageInput } from "@/components/LogoImageInput"
 import { OpeningHoursInput } from "@/components/OpeningHoursInput"
 import { updateRestaurant } from "@/app/actions/restaurants"
 
@@ -34,6 +35,7 @@ type Restaurant = {
     phone: string | null
     openingHours: Record<string, string> | null
     images: string[] | null
+    logo?: string | null
     city_id?: number | null
 }
 
@@ -197,7 +199,11 @@ export function EditRestaurantForm({
             {/* Media */}
             <section className="admin-card p-4">
                 <h2 className="font-bold text-xl text-primary-cotainer mb-2">Media</h2>
-                <p className="text-muted-foreground mb-4">Upload new images or keep existing ones.</p>
+                <p className="text-muted-foreground mb-4">Upload a logo and new gallery images, or keep existing media.</p>
+
+                <div className="mb-6">
+                    <LogoImageInput label="Restaurant logo" currentLogo={restaurant.logo ?? null} />
+                </div>
 
                 {/* Existing images */}
                 {restaurant.images && restaurant.images.length > 0 && (
